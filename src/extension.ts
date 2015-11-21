@@ -9,9 +9,13 @@ export function activate(context: vscode.ExtensionContext) {
     let parser = new ScriptParser(vscode.window.activeTextEditor);
     let text = parser.getScriptText();
     let config = vscode.workspace.getConfiguration('scriptcsRunner');
-    let runner = new ScriptRunner(config.get<string>('scriptcsPath'), config.get<boolean>('debug'));
-    let scriptPath = text == undefined ? vscode.window.activeTextEditor.document.fileName : runner.saveScript(text);
-    runner.runScript(scriptPath);
+    let runner = new ScriptRunner(config.get<string>('scriptcsPath'), config.get<boolean>('debug'), process.platform == 'win32');
+    let scriptMetaData = runner.getScriptMetadata(text);
+    try {
+      runner.runScript(scriptMetaData);
+    } catch (e) {
+      vscode.window.showErrorMessage('Couldn\'t execute the script.\n' + e);
+    }
   });
 }
 
@@ -36,39 +40,50 @@ class ScriptParser {
   }
 }
 
+class ScriptMetadata {
+  public ScriptName : string;
+  public FolderPath : string;
+}
+
 class ScriptRunner {
-  private _folder: string;
+  private _tempScriptFolder: string;
+  private _currentLocation: string;
   private _scriptcsPath: string;
   private _debug: boolean;
+  private _pathSeparator: string;
 
-  constructor(scriptcsPath : string, debug : boolean) {
-    let currentLocation = vscode.window.activeTextEditor.document.fileName.substring(0, vscode.window.activeTextEditor.document.fileName.lastIndexOf('/'));
-    this._folder = currentLocation + '/.script_temp/';
+  constructor(scriptcsPath: string, debug: boolean, isWindows: boolean) {
+    this._pathSeparator = isWindows ? '\\' : '/';    
+    this._currentLocation = vscode.window.activeTextEditor.document.fileName.substring(0, vscode.window.activeTextEditor.document.fileName.lastIndexOf(this._pathSeparator));
+    this._tempScriptFolder = this._currentLocation + this._pathSeparator + '.script_temp' + this._pathSeparator;
     this._scriptcsPath = scriptcsPath;
     this._debug = debug;
   }
 
-  public saveScript(text: string): string {
-    let name = (Math.random() + 1).toString(36).substring(5) + '.csx';
-    let path = this._folder + name;
+  public getScriptMetadata(text: string): ScriptMetadata {
+    
+    if (text == undefined) {
+      return { ScriptName: vscode.window.activeTextEditor.document.fileName, FolderPath: this._currentLocation };
+    }
+    
+    let filename = (Math.random() + 1).toString(36).substring(5) + '.csx';
 
     try {
-      fs.mkdirSync(this._folder);
+      fs.mkdirSync(this._tempScriptFolder);
     } catch (e) {
       if (e.code != 'EEXIST') throw e;
     }
-    fs.writeFileSync(path, text);
+    fs.writeFileSync(this._tempScriptFolder + filename, text);
 
-    return path;
+    return { ScriptName: filename, FolderPath: this._tempScriptFolder };
   }
 
-  public runScript(path: string): void {
-    let args = ['-script', path];
+  public runScript(scriptMetaData: ScriptMetadata): void {
+    let args = ['-script', scriptMetaData.ScriptName];
     if (this._debug) {
       args.push('-debug');
     }
-    let scriptcs = child_process.spawn(this._scriptcsPath, args);
-
+    let scriptcs = child_process.spawn(this._scriptcsPath, args, { cwd: scriptMetaData.FolderPath });
     var outputChannel = vscode.window.createOutputChannel('scriptcs');
     outputChannel.show();
 
@@ -79,10 +94,10 @@ class ScriptRunner {
 
     scriptcs.on('close', () => {
       try {
-        fs.readdirSync(this._folder).forEach(fileName => {
-          fs.unlinkSync(this._folder + '/' + fileName);
+        fs.readdirSync(this._tempScriptFolder).forEach(fileName => {
+          fs.unlinkSync(this._tempScriptFolder + this._pathSeparator + fileName);
         });
-        fs.rmdirSync(this._folder);
+        fs.rmdirSync(this._tempScriptFolder);
       } catch (e) {
         if (e.code != 'ENOENT') throw e;
       }
