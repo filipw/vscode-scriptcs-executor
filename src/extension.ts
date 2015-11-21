@@ -34,17 +34,25 @@ class ScriptParser {
 }
 
 class ScriptRunner {
+	private _folder: string;
+
+	constructor() {
+		let currentLocation = vscode.window.activeTextEditor.document.fileName.substring(0, vscode.window.activeTextEditor.document.fileName.lastIndexOf('/'));
+		this._folder = currentLocation + "/.script_temp/";
+	}
+
 	public saveScript(text: string): string {
-		let name = (Math.random() + 1).toString(36).substring(7) + '.csx';
-		let folder = vscode.window.activeTextEditor.document.fileName.replace('test.csx', '') + ".script_temp/";
-		let path = folder + name;
+		let name = (Math.random() + 1).toString(36).substring(5) + '.csx';
+		let path = this._folder + name;
 
 		try {
-			fs.mkdirSync(folder);
+			fs.mkdirSync(this._folder);
+			/*		fs.readdirSync(folder).forEach(fileName => {
+						fs.unlinkSync(fileName);
+					});*/
 		} catch (e) {
 			if (e.code != 'EEXIST') throw e;
 		}
-
 		fs.writeFileSync(path, text);
 
 		return path;
@@ -52,12 +60,20 @@ class ScriptRunner {
 
 	public runScript(path: string): void {
 		let scriptcs = child_process.spawn("/Users/filip/.svm/shims/scriptcs", ['-script', path]);
+
 		var outputChannel = vscode.window.createOutputChannel('scriptcs');
 		outputChannel.show();
 
-		scriptcs.stdout.on('data', function(buffer) {
+		scriptcs.stdout.on('data', buffer => {
 			console.log(buffer.toString());
 			outputChannel.appendLine(buffer.toString());
+		});
+
+		scriptcs.on('close', () => {
+			fs.readdirSync(this._folder).forEach(fileName => {
+				fs.unlinkSync(this._folder + '/' + fileName);
+			});
+			fs.rmdirSync(this._folder);
 		});
 	}
 }
