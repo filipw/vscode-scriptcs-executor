@@ -1,7 +1,7 @@
 {
 	"name": "scriptcs-runner",
 	"description": "Runner for scriptcs (C# scripts). Allows for execution of entire CSX scripts or snippets of C# code.",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"publisher": "filipw",
 	"engines": {
 		"vscode": "^0.10.1"

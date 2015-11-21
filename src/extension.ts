@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
 		console.log(text);
 
 		let runner = new ScriptRunner();
-		let scriptPath = runner.saveScript(text);
+		let scriptPath = text == undefined ? vscode.window.activeTextEditor.document.fileName : runner.saveScript(text);
 		runner.runScript(scriptPath);
 	});
 }
@@ -27,6 +27,11 @@ class ScriptParser {
 	public getScriptText(): string {
 		let start = this._textEditor.selection.start;
 		let end = this._textEditor.selection.end;
+
+		if (start.compareTo(end) == 0) {
+			return undefined;
+		}
+
 		let text = this._textEditor.document.getText(new vscode.Range(start, end));
 
 		return text;
@@ -47,9 +52,6 @@ class ScriptRunner {
 
 		try {
 			fs.mkdirSync(this._folder);
-			/*		fs.readdirSync(folder).forEach(fileName => {
-						fs.unlinkSync(fileName);
-					});*/
 		} catch (e) {
 			if (e.code != 'EEXIST') throw e;
 		}
@@ -59,6 +61,7 @@ class ScriptRunner {
 	}
 
 	public runScript(path: string): void {
+		console.log(path);
 		let scriptcs = child_process.spawn("/Users/filip/.svm/shims/scriptcs", ['-script', path]);
 
 		var outputChannel = vscode.window.createOutputChannel('scriptcs');
@@ -70,10 +73,14 @@ class ScriptRunner {
 		});
 
 		scriptcs.on('close', () => {
-			fs.readdirSync(this._folder).forEach(fileName => {
-				fs.unlinkSync(this._folder + '/' + fileName);
-			});
-			fs.rmdirSync(this._folder);
+			try {
+				fs.readdirSync(this._folder).forEach(fileName => {
+					fs.unlinkSync(this._folder + '/' + fileName);
+				});
+				fs.rmdirSync(this._folder);
+			} catch (e) {
+				if (e.code != 'ENOENT') throw e;
+			}
 		});
 	}
 }
