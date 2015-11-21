@@ -6,15 +6,20 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('scriptcsRunner is now active!');
 
   var disposable = vscode.commands.registerCommand('extension.scriptcsRunner', () => {
-    let parser = new ScriptParser(vscode.window.activeTextEditor);
-    let text = parser.getScriptText();
-    let config = vscode.workspace.getConfiguration('scriptcsRunner');
-    let runner = new ScriptRunner(config.get<string>('scriptcsPath'), config.get<boolean>('debug'), process.platform == 'win32');
-    let scriptMetaData = runner.getScriptMetadata(text);
-    try {
-      runner.runScript(scriptMetaData);
-    } catch (e) {
-      vscode.window.showErrorMessage('Couldn\'t execute the script.\n' + e);
+
+    if (vscode.window.activeTextEditor.document.isUntitled) {
+      vscode.window.showWarningMessage('Please save the document before running scriptcs!');
+    } else {
+      let parser = new ScriptParser(vscode.window.activeTextEditor);
+      let text = parser.getScriptText();
+      let config = vscode.workspace.getConfiguration('scriptcsRunner');
+      let runner = new ScriptRunner(config.get<string>('scriptcsPath'), config.get<boolean>('debug'), process.platform == 'win32');
+      let scriptMetaData = runner.getScriptMetadata(text);
+      try {
+        runner.runScript(scriptMetaData);
+      } catch (e) {
+        vscode.window.showErrorMessage('Couldn\'t execute the script.\n' + e);
+      }
     }
   });
 }
@@ -41,8 +46,8 @@ class ScriptParser {
 }
 
 class ScriptMetadata {
-  public ScriptName : string;
-  public FolderPath : string;
+  public ScriptName: string;
+  public FolderPath: string;
 }
 
 class ScriptRunner {
@@ -53,7 +58,7 @@ class ScriptRunner {
   private _pathSeparator: string;
 
   constructor(scriptcsPath: string, debug: boolean, isWindows: boolean) {
-    this._pathSeparator = isWindows ? '\\' : '/';    
+    this._pathSeparator = isWindows ? '\\' : '/';
     this._currentLocation = vscode.window.activeTextEditor.document.fileName.substring(0, vscode.window.activeTextEditor.document.fileName.lastIndexOf(this._pathSeparator));
     this._tempScriptFolder = this._currentLocation + this._pathSeparator + '.script_temp' + this._pathSeparator;
     this._scriptcsPath = scriptcsPath;
@@ -61,11 +66,11 @@ class ScriptRunner {
   }
 
   public getScriptMetadata(text: string): ScriptMetadata {
-    
+
     if (text == undefined) {
       return { ScriptName: vscode.window.activeTextEditor.document.fileName, FolderPath: this._currentLocation };
     }
-    
+
     let filename = (Math.random() + 1).toString(36).substring(5) + '.csx';
 
     try {
