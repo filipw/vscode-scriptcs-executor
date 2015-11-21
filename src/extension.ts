@@ -43,7 +43,7 @@ class ScriptRunner {
 
 	constructor() {
 		let currentLocation = vscode.window.activeTextEditor.document.fileName.substring(0, vscode.window.activeTextEditor.document.fileName.lastIndexOf('/'));
-		this._folder = currentLocation + "/.script_temp/";
+		this._folder = currentLocation + '/.script_temp/';
 	}
 
 	public saveScript(text: string): string {
@@ -62,7 +62,7 @@ class ScriptRunner {
 
 	public runScript(path: string): void {
 		console.log(path);
-		let scriptcs = child_process.spawn("/Users/filip/.svm/shims/scriptcs", ['-script', path]);
+		let scriptcs = child_process.spawn('scriptcs', ['-script', path]);
 
 		var outputChannel = vscode.window.createOutputChannel('scriptcs');
 		outputChannel.show();
