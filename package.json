@@ -33,7 +33,13 @@
                 "description": "Specifies whether C# scripts/snippets should be executed in debug mode."
             }
         }
-    }    
+    },
+    "keybindings": [{
+        "command": "extension.scriptcsRunner",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorTextFocus"
+    }]        
 	},
 	"scripts": {
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
