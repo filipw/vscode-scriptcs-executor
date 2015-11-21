@@ -3,15 +3,13 @@ import * as child_process from 'child_process'
 import * as fs from 'fs'
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('ScriptCsRunner is now active!');
+  console.log('scriptcsRunner is now active!');
 
   var disposable = vscode.commands.registerCommand('extension.scriptcsRunner', () => {
     let parser = new ScriptParser(vscode.window.activeTextEditor);
     let text = parser.getScriptText();
-
-    console.log(text);
-
-    let runner = new ScriptRunner();
+    let config = vscode.workspace.getConfiguration('scriptcsRunner');
+    let runner = new ScriptRunner(config.get<string>('scriptcsPath'), config.get<boolean>('debug'));
     let scriptPath = text == undefined ? vscode.window.activeTextEditor.document.fileName : runner.saveScript(text);
     runner.runScript(scriptPath);
   });
@@ -40,10 +38,14 @@ class ScriptParser {
 
 class ScriptRunner {
   private _folder: string;
+  private _scriptcsPath: string;
+  private _debug: boolean;
 
-  constructor() {
+  constructor(scriptcsPath : string, debug : boolean) {
     let currentLocation = vscode.window.activeTextEditor.document.fileName.substring(0, vscode.window.activeTextEditor.document.fileName.lastIndexOf('/'));
     this._folder = currentLocation + '/.script_temp/';
+    this._scriptcsPath = scriptcsPath;
+    this._debug = debug;
   }
 
   public saveScript(text: string): string {
@@ -61,8 +63,11 @@ class ScriptRunner {
   }
 
   public runScript(path: string): void {
-    console.log(path);
-    let scriptcs = child_process.spawn('scriptcs', ['-script', path]);
+    let args = ['-script', path];
+    if (this._debug) {
+      args.push('-debug');
+    }
+    let scriptcs = child_process.spawn(this._scriptcsPath, args);
 
     var outputChannel = vscode.window.createOutputChannel('scriptcs');
     outputChannel.show();

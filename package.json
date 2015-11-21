@@ -17,7 +17,23 @@
 		"commands": [{
 			"command": "extension.scriptcsRunner",
 			"title": "Execute with scriptcs"
-		}]
+		}],
+    "configuration": {
+        "type": "object",
+        "title": "ScriptCsRunner configuration",
+        "properties": {
+            "scriptcsRunner.scriptcsPath": {
+                "type": "string",
+                "default": "scriptcs",
+                "description": "Location of scriptcs executable. Defaults to 'scriptcs', meaning it just tries to use your PATH environment variable."
+            },
+            "scriptcsRunner.debug": {
+                "type": "boolean",
+                "default": false,
+                "description": "Specifies whether C# scripts/snippets should be executed in debug mode."
+            }
+        }
+    }    
 	},
 	"scripts": {
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
