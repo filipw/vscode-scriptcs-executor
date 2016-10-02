@@ -19,7 +19,7 @@ VS Code extension for running C# snippets using scriptcs.
 
 ### Whole file/script
 
-1. Just set focus to a window with C# code. Do not hihglight anything.
+1. Just set focus to a window with C# code. Do not highlight anything.
 2. Press `CMD+shift+r` (Mac) or `Ctrl+shift+r` (Linux, Windows) to run the code. Alternatively, press `F1` and choose `Execute with scriptcs` option
 3. A new `scriptcs` window will pop up, with your script output.
 
