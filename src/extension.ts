@@ -4,6 +4,7 @@ import * as fs from 'fs'
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('scriptcsRunner is now active!');
+  const chan = vscode.window.createOutputChannel('scriptcs');
 
   var disposable = vscode.commands.registerCommand('extension.scriptcsRunner', () => {
 
@@ -13,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
       let parser = new ScriptParser(vscode.window.activeTextEditor);
       let text = parser.getScriptText();
       let config = vscode.workspace.getConfiguration('scriptcsRunner');
-      let runner = new ScriptRunner(config.get<string>('scriptcsPath'), config.get<boolean>('debug'), process.platform == 'win32');
+      let runner = new ScriptRunner(config.get<string>('scriptcsPath'), config.get<boolean>('debug'), process.platform == 'win32', chan);
       let scriptMetaData = runner.getScriptMetadata(text);
       try {
         runner.runScript(scriptMetaData);
@@ -51,13 +52,15 @@ class ScriptMetadata {
 }
 
 class ScriptRunner {
+  private _outputChannel: vscode.OutputChannel;
   private _tempScriptFolder: string;
   private _currentLocation: string;
   private _scriptcsPath: string;
   private _debug: boolean;
   private _pathSeparator: string;
 
-  constructor(scriptcsPath: string, debug: boolean, isWindows: boolean) {
+  constructor(scriptcsPath: string, debug: boolean, isWindows: boolean, outputChannel: vscode.OutputChannel) {
+    this._outputChannel = outputChannel;
     this._pathSeparator = isWindows ? '\\' : '/';
     this._currentLocation = vscode.window.activeTextEditor.document.fileName.substring(0, vscode.window.activeTextEditor.document.fileName.lastIndexOf(this._pathSeparator));
     this._tempScriptFolder = this._currentLocation + this._pathSeparator + '.script_temp' + this._pathSeparator;
@@ -89,12 +92,12 @@ class ScriptRunner {
       args.push('-debug');
     }
     let scriptcs = child_process.spawn(this._scriptcsPath, args, { cwd: scriptMetaData.FolderPath });
-    var outputChannel = vscode.window.createOutputChannel('scriptcs');
-    outputChannel.show();
+    this._outputChannel.clear();
+    this._outputChannel.show();
 
     scriptcs.stdout.on('data', buffer => {
-      console.log(buffer.toString());
-      outputChannel.appendLine(buffer.toString());
+      // console.log(buffer.toString());
+      this._outputChannel.appendLine(buffer.toString());
     });
 
     scriptcs.on('close', () => {
