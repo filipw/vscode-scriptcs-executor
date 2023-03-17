@@ -1,4 +1,4 @@
-# C# script runner (scriptcs for Visual Studio Code)
+# C# script executor (scriptcs for Visual Studio Code)
 
 VS Code extension for running C# snippets using scriptcs.
 
