@@ -37,8 +37,8 @@ node ./node_modules/vscode/bin/compile -watch -p ./
 
 ## Contributing and issues
 
-All the code is on [github](https://github.com/filipw/vscode-scriptcs-runner). Please report any issues or suggestions there.
+All the code is on [github](https://github.com/filipw/vscode-scriptcs-executor). Please report any issues or suggestions there.
 
 ## License
 
-[MIT](https://github.com/filipw/vscode-scriptcs-runner/blob/master/LICENSE)
+[MIT](https://github.com/filipw/vscode-scriptcs-executor/blob/master/LICENSE)
